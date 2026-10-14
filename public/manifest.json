@@ -1,20 +1,20 @@
 {
   "name": "Ad-Baraka Traders",
   "short_name": "Ad-Baraka",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#0b0f19",
-  "theme_color": "#2563eb",
+  "theme_color": "#111827",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/app-logo.png",
+      "src": "./app-logo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/app-logo.svg",
+      "src": "./app-logo.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
