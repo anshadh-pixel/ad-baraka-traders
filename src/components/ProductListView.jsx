@@ -12,6 +12,7 @@ export default function ProductListView({
   onDeleteProduct
 }) {
   const [search, setSearch] = useState('');
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   const filtered = products.filter(p => 
     p.name.toLowerCase().includes(search.toLowerCase())
@@ -49,7 +50,9 @@ export default function ProductListView({
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search products..."
+          onFocus={() => setIsSearchFocused(true)}
+          onBlur={() => setIsSearchFocused(false)}
+          placeholder={isSearchFocused ? "" : "Search products..."}
           autoComplete="off"
           autoCorrect="off"
           autoCapitalize="none"

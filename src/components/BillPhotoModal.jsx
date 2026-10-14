@@ -147,7 +147,7 @@ export default function BillPhotoModal({
         </div>
 
         {/* Scrollable Preview Area */}
-        <div className="p-4 overflow-y-auto space-y-4 flex-1">
+        <div className="p-4 overflow-y-auto overscroll-contain space-y-4 flex-1 modal-scrollable">
           {statusMessage && (
             <div className="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-semibold text-center">
               {statusMessage}

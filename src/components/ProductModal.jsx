@@ -39,9 +39,6 @@ export default function ProductModal({ isOpen, onClose, onSave, initialProduct, 
     <div 
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs modal-backdrop overscroll-contain"
       onClick={onClose}
-      onTouchMove={(e) => {
-        if (e.target === e.currentTarget) e.preventDefault();
-      }}
     >
       <div 
         onClick={(e) => e.stopPropagation()}
@@ -56,7 +53,7 @@ export default function ProductModal({ isOpen, onClose, onSave, initialProduct, 
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 space-y-4 overflow-y-auto overscroll-contain flex-1">
+        <form onSubmit={handleSubmit} className="p-5 space-y-4 overflow-y-auto overscroll-contain flex-1 modal-scrollable">
           {error && (
             <div className="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-semibold">
               {error}

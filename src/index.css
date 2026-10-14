@@ -11,6 +11,8 @@
     min-height: 100%;
     overflow-x: hidden;
     overflow-y: auto !important;
+    overscroll-behavior: none !important;
+    overscroll-behavior-y: none !important;
     touch-action: manipulation;
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
@@ -27,6 +29,8 @@
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
     overflow-y: auto !important;
+    overscroll-behavior: none !important;
+    overscroll-behavior-y: none !important;
     touch-action: manipulation;
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;

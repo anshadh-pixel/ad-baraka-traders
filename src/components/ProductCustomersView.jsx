@@ -26,6 +26,7 @@ export default function ProductCustomersView({
   onDeleteCustomer
 }) {
   const [search, setSearch] = useState('');
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   // Only customers who buy this specific product
   const productCustomers = customers.filter(c => c.productId === product.id);
@@ -83,7 +84,9 @@ export default function ProductCustomersView({
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search customers by name or place..."
+            onFocus={() => setIsSearchFocused(true)}
+            onBlur={() => setIsSearchFocused(false)}
+            placeholder={isSearchFocused ? "" : "Search customers by name or place..."}
             autoComplete="off"
             autoCorrect="off"
             autoCapitalize="none"

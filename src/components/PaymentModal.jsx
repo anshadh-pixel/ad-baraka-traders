@@ -67,18 +67,14 @@ export default function PaymentModal({
   return (
     <div 
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs modal-backdrop overscroll-contain"
-      onTouchMove={(e) => {
-        if (e.target === e.currentTarget) {
-          e.preventDefault();
-        }
-      }}
+      onClick={onClose}
     >
       <div 
         onClick={(e) => e.stopPropagation()}
         className="w-full max-w-md bg-[#162032] border border-slate-700 rounded-2xl shadow-xl overflow-hidden animate-fade-in max-h-[92vh] flex flex-col modal-content"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-700 bg-[#111827]">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-700 bg-[#111827] shrink-0">
           <div>
             <h3 className="font-bold text-white text-base">
               Record Payment (പെയ്‌മെന്റ് അടക്കുക)
@@ -93,7 +89,7 @@ export default function PaymentModal({
         </div>
 
         {/* Body */}
-        <div className="p-5 space-y-4 overflow-y-auto">
+        <div className="p-5 space-y-4 overflow-y-auto overscroll-contain flex-1 modal-scrollable">
           {error && (
             <div className="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-semibold">
               {error}
