@@ -38,11 +38,21 @@
     overflow-x: hidden;
   }
 
+  *, *::before, *::after {
+    touch-action: manipulation;
+  }
+
   /* CRITICAL: Force font-size >= 16px on ALL inputs/selects on mobile to completely prevent iOS auto-zoom */
   input, select, textarea {
     font-size: 16px !important;
     font-family: inherit;
     touch-action: manipulation;
+  }
+
+  /* Completely hide placeholder on focus so background text never overlaps or collides with typed words */
+  input:focus::placeholder, textarea:focus::placeholder {
+    color: transparent !important;
+    opacity: 0 !important;
   }
 
   button {
@@ -78,8 +88,10 @@
   padding-bottom: max(3rem, calc(env(safe-area-inset-bottom, 0px) + 2.5rem)) !important;
 }
 
-/* Background scroll lock when modals are open */
+/* Background scroll lock when modals are open - 100% bulletproof on iOS and Android */
 body.modal-open {
+  position: fixed !important;
+  width: 100% !important;
   overflow: hidden !important;
   touch-action: none !important;
 }
@@ -125,7 +137,7 @@ body.theme-dark {
   border-color: #3b82f6;
 }
 .theme-dark .biz-input {
-  background-color: #0b0f19;
+  background-color: #0f172a !important;
   border: 1px solid #26334d;
   color: #f8fafc;
   border-radius: 12px;

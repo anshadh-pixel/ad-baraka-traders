@@ -44,18 +44,23 @@ export default function ProductListView({
 
       {/* Search Input */}
       <div className="relative">
-        <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+        <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search products..."
-          className="biz-input pl-10 pr-4"
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="none"
+          spellCheck="false"
+          name="search_products_query"
+          className="biz-input pl-10 pr-10"
         />
         {search && (
           <button
             onClick={() => setSearch('')}
-            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-white"
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 hover:text-white border border-slate-700"
           >
             Clear
           </button>

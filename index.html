@@ -34,22 +34,36 @@
           e.preventDefault();
         }, { passive: false });
 
-        // Prevent multi-touch pinch on Android / WebKit
+        // Prevent multi-touch pinch on start (Android & WebKit)
+        document.addEventListener('touchstart', function(e) {
+          if (e.touches && e.touches.length > 1) {
+            e.preventDefault();
+          }
+        }, { passive: false });
+
+        // Prevent multi-touch pinch on move (Android & WebKit)
         document.addEventListener('touchmove', function(e) {
           if (e.touches && e.touches.length > 1) {
             e.preventDefault();
           }
         }, { passive: false });
 
-        // Prevent double-tap to zoom
+        // Prevent double-tap to zoom (non-passive listener for reliable preventDefault)
         var lastTouchEnd = 0;
         document.addEventListener('touchend', function(e) {
           var now = Date.now();
-          if (now - lastTouchEnd <= 300) {
+          if (now - lastTouchEnd <= 350) {
             e.preventDefault();
           }
           lastTouchEnd = now;
-        }, false);
+        }, { passive: false });
+
+        // Prevent trackpad / mouse pinch-zoom via Ctrl+Wheel
+        document.addEventListener('wheel', function(e) {
+          if (e.ctrlKey) {
+            e.preventDefault();
+          }
+        }, { passive: false });
       })();
     </script>
   </head>
