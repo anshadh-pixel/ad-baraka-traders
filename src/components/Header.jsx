@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Store, RefreshCw, Sun, Moon } from 'lucide-react';
 
-export default function Header({ business, theme, onToggleTheme, onRefreshData }) {
+export default function Header({ business, theme, onToggleTheme, onRefreshData, onGoHome }) {
   const isLight = theme === 'light';
   const [isRotating, setIsRotating] = useState(false);
 
@@ -18,7 +18,11 @@ export default function Header({ business, theme, onToggleTheme, onRefreshData }
   return (
     <header className={`${isLight ? 'bg-white border-slate-200 shadow-xs' : 'bg-[#111827] border-slate-800 shadow-sm'} border-b px-4 sticky top-0 z-30 transition-colors safe-top-header`}>
       <div className="max-w-xl mx-auto flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
+        <div 
+          onClick={onGoHome}
+          className="flex items-center gap-2.5 cursor-pointer select-none active:opacity-80 transition-opacity"
+          title="Go to Home Screen (Products)"
+        >
           <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold shadow-sm flex-shrink-0">
             <Store className="w-5 h-5" />
           </div>

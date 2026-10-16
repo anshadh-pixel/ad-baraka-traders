@@ -36,11 +36,8 @@ export default function App() {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
   };
 
-  // Direct route navigation: default to first product so user directly sees the 7 Excel customers!
-  const [selectedProductId, setSelectedProductId] = useState(() => {
-    const loadedData = getStorageData();
-    return loadedData.products?.length > 0 ? loadedData.products[0].id : null;
-  });
+  // App opens on Home Screen (Products list)
+  const [selectedProductId, setSelectedProductId] = useState(null);
   const [selectedCustomerId, setSelectedCustomerId] = useState(null);
 
   // Modals
@@ -230,17 +227,21 @@ export default function App() {
         </div>
       )}
 
-      {/* Header with Theme Toggle & Safe Sync Button */}
+      {/* Header with Theme Toggle, Safe Sync Button & Home Navigation */}
       <Header
         business={business}
         theme={theme}
         onToggleTheme={handleToggleTheme}
         onRefreshData={handleRefreshData}
+        onGoHome={() => {
+          setSelectedProductId(null);
+          setSelectedCustomerId(null);
+        }}
       />
 
       {/* Main Content Area */}
       <main className="flex-1 w-full max-w-xl mx-auto px-4 pt-4 pb-12 safe-bottom-area">
-        {/* LEVEL 1: PRODUCTS LIST (Shown only when user explicitly goes back to Products) */}
+        {/* LEVEL 1: PRODUCTS LIST (Home Screen - default landing screen!) */}
         {!selectedProductId && (
           <ProductListView
             products={products}
