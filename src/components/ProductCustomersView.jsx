@@ -40,23 +40,20 @@ export default function ProductCustomersView({
   // Route Totals
   const pendingOrdersCount = pendingOrders.length;
   
-  // 1. Total Bill Amount Pending (Due Amt Total Value across all customers)
-  const totalDuePending = productCustomers.reduce((sum, c) => {
+  // 1. Bill Amt Pending (Total Due of Delivered Bills: skm 648 + farm house 576 = 1,224)
+  const billAmountPending = deliveredCustomers.reduce((sum, c) => {
     const stats = getCustomerStats(c);
     return sum + stats.totalBalanceDue;
   }, 0);
 
-  // 2. Total Collected Amount
-  const totalCollectedAmount = productCustomers.reduce((sum, c) => {
+  // 2. Total Collected Amount (from delivered customers: kalavar 540 + asif 540 + homeland 648 = 1,728)
+  const totalCollectedAmount = deliveredCustomers.reduce((sum, c) => {
     const stats = getCustomerStats(c);
     return sum + stats.totalPaidAmount;
   }, 0);
 
-  // 3. Total Route Sales Value
-  const totalSalesValue = productCustomers.reduce((sum, c) => {
-    const stats = getCustomerStats(c);
-    return sum + stats.totalBillsAmount;
-  }, 0);
+  // 3. Delivered Total Value (1224 due + 1728 collected = 2,952)
+  const deliveredTotalValue = billAmountPending + totalCollectedAmount;
 
   // Determine which list to display based on activeTab
   let displayList = deliveredCustomers;
@@ -147,10 +144,10 @@ export default function ProductCustomersView({
             </div>
             <div className="text-right">
               <span className="text-[10px] uppercase font-bold text-slate-400 block">
-                Total Route Value
+                Delivered Total
               </span>
               <span className="text-base font-black text-white">
-                {currency}{totalSalesValue.toLocaleString()}
+                {currency}{deliveredTotalValue.toLocaleString()}
               </span>
             </div>
           </div>
@@ -177,15 +174,15 @@ export default function ProductCustomersView({
               </span>
             </div>
 
-            {/* 2. Bill Amt Pending (Due Amt Total Value) */}
+            {/* 2. Bill Amt Pending (Due Amt Total Value: 648 + 576 = 1224) */}
             <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-center">
               <span className="text-[10px] text-slate-400 block font-semibold truncate">
                 Bill Amt Pending
               </span>
               <span className={`text-sm font-extrabold mt-0.5 block ${
-                totalDuePending > 0 ? 'text-amber-400' : 'text-slate-400'
+                billAmountPending > 0 ? 'text-amber-400' : 'text-slate-400'
               }`}>
-                {currency}{totalDuePending.toLocaleString()}
+                {currency}{billAmountPending.toLocaleString()}
               </span>
             </div>
 

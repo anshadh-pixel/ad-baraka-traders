@@ -162,9 +162,12 @@ body.theme-dark {
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
-/* LIGHT THEME (Clean, Crisp, Professional Paper Style) */
+/* =========================================================================
+   LIGHT THEME (Soothing, Eye-Friendly, Non-Glaring Matte Design)
+   Fixes "3D color eye pain" by removing neon colors & harsh reflections!
+   ========================================================================= */
 body.theme-light {
-  background-color: #f1f5f9 !important;
+  background-color: #f8fafc !important; /* Soft soothing neutral zinc/slate background */
   color: #0f172a !important;
 }
 
@@ -174,7 +177,8 @@ body.theme-light {
 .theme-light .bg-\[\#111827\],
 .theme-light .bg-\[\#131b2e\],
 .theme-light .bg-\[\#162032\],
-.theme-light .bg-slate-900 {
+.theme-light .bg-slate-900,
+.theme-light .bg-slate-900\/90 {
   background-color: #ffffff !important;
 }
 
@@ -189,16 +193,17 @@ body.theme-light {
   background-color: #e2e8f0 !important;
 }
 
-/* Border overrides for Light Theme */
+/* Clean, soft borders (No harsh contrast) */
 .theme-light .border-slate-800,
 .theme-light .border-slate-800\/80,
+.theme-light .border-slate-800\/90,
 .theme-light .border-slate-700,
 .theme-light .border-slate-700\/80,
 .theme-light .border-slate-600 {
   border-color: #e2e8f0 !important;
 }
 
-/* Text overrides for Light Theme */
+/* High-contrast, easy-on-the-eyes text colors */
 .theme-light .text-white {
   color: #0f172a !important;
 }
@@ -215,18 +220,86 @@ body.theme-light {
   color: #64748b !important;
 }
 
-/* Cards & Modals in Light Theme */
+/* SOOTHING, DEEP, NON-NEON ACCENT TEXT (Removes the chromatic 3D glasses effect!) */
+.theme-light .text-amber-400,
+.theme-light .text-amber-300 {
+  color: #92400e !important; /* Calm, readable deep amber/brown */
+}
+
+.theme-light .text-emerald-400,
+.theme-light .text-emerald-300 {
+  color: #166534 !important; /* Deep natural forest green */
+}
+
+.theme-light .text-blue-400,
+.theme-light .text-blue-300 {
+  color: #1d4ed8 !important; /* Deep calm royal blue */
+}
+
+.theme-light .text-rose-400,
+.theme-light .text-rose-300 {
+  color: #991b1b !important; /* Deep calm crimson */
+}
+
+/* Soft, gentle pastel badge backgrounds for Light Mode */
+.theme-light .bg-amber-500\/15,
+.theme-light .bg-amber-500\/20,
+.theme-light .bg-amber-600\/20 {
+  background-color: #fef3c7 !important;
+  border-color: #fde68a !important;
+}
+
+.theme-light .bg-emerald-500\/10,
+.theme-light .bg-emerald-500\/15,
+.theme-light .bg-emerald-500\/20,
+.theme-light .bg-emerald-600\/20 {
+  background-color: #dcfce7 !important;
+  border-color: #bbf7d0 !important;
+}
+
+.theme-light .bg-rose-500\/10,
+.theme-light .bg-rose-500\/15,
+.theme-light .bg-rose-500\/20 {
+  background-color: #fee2e2 !important;
+  border-color: #fecaca !important;
+}
+
+.theme-light .bg-blue-600\/15,
+.theme-light .bg-blue-600\/20 {
+  background-color: #eff6ff !important;
+  border-color: #bfdbfe !important;
+}
+
+.theme-light .border-amber-500\/30,
+.theme-light .border-amber-500\/40,
+.theme-light .border-amber-500\/50 {
+  border-color: #fde68a !important;
+}
+
+.theme-light .border-emerald-500\/20,
+.theme-light .border-emerald-500\/30,
+.theme-light .border-emerald-500\/50 {
+  border-color: #bbf7d0 !important;
+}
+
+.theme-light .border-rose-500\/20,
+.theme-light .border-rose-500\/30,
+.theme-light .border-rose-500\/40 {
+  border-color: #fecaca !important;
+}
+
+/* Flat, calm card surfaces (No heavy 3D shadow) */
 .theme-light .biz-card {
   background-color: #ffffff !important;
   border: 1px solid #e2e8f0 !important;
-  border-radius: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
 }
 
 .theme-light .biz-card-hover:hover {
   background-color: #f8fafc !important;
-  border-color: #2563eb !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06) !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04) !important;
 }
 
 .theme-light .biz-input {
@@ -242,11 +315,11 @@ body.theme-light {
 .theme-light .biz-input:focus {
   outline: none;
   border-color: #2563eb !important;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15) !important;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12) !important;
 }
 
 .theme-light .modal-content {
   background-color: #ffffff !important;
   border: 1px solid #e2e8f0 !important;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08) !important;
 }
