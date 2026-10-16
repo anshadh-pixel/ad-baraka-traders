@@ -1,7 +1,7 @@
 const STORAGE_KEYS = {
-  BUSINESS: 'bizflow_business_v2',
-  PRODUCTS: 'bizflow_products_v2',
-  CUSTOMERS: 'bizflow_customers_v2',
+  BUSINESS: 'bizflow_business_v3',
+  PRODUCTS: 'bizflow_products_v3',
+  CUSTOMERS: 'bizflow_customers_v3',
   THEME: 'bizflow_theme_mode'
 };
 
@@ -16,126 +16,244 @@ export const DEFAULT_BUSINESS = {
 export const DEFAULT_PRODUCTS = [
   {
     id: "prod-1",
-    name: "Basmati Rice 25kg",
-    basePrice: 1750,
-    unit: "Bag",
-  },
-  {
-    id: "prod-2",
-    name: "Pure Coconut Oil 15L",
-    basePrice: 2850,
-    unit: "Tin",
-  },
-  {
-    id: "prod-3",
-    name: "Black Pepper Grade A",
-    basePrice: 620,
-    unit: "kg",
-  },
-  {
-    id: "prod-4",
-    name: "Tea Dust 5kg",
-    basePrice: 1350,
-    unit: "Pack",
+    name: "Regular Supply (36 Units)",
+    basePrice: 16,
+    unit: "Unit",
   }
 ];
 
+// Exact 7 customers matching the user's Excel sheet:
+// kalavar (kodanchery, 36, 15, 540, del: v, col: v)
+// skm (kalpatta, 36, 18, 648, del: v, col: x)
+// farm house (erumad, 36, 16, 576, del: v, col: x)
+// asif azna (sm, 36, 15, 540, del: v, col: v)
+// home land (kodually, 36, 18, 648, del: v, col: v)
+// varnam (chulliyod, 36, 18, 648, del: x, col: x)
+// sithara furniture (erumad, 36, 16, 576, del: x, col: x)
 export const DEFAULT_CUSTOMERS = [
   {
-    id: "cust-1",
+    id: "cust-kalavar",
     productId: "prod-1",
-    customerName: "Rahim Hotel & Caterers",
-    customerPhone: "9847112233",
-    customerPlace: "Perinthalmanna",
-    customRate: 1680,
+    customerName: "kalavar",
+    customerPlace: "kodanchery",
+    customerPhone: "",
+    quantity: 36,
+    customRate: 15,
+    totalAmount: 540,
+    isDelivered: true,
+    isCollected: true,
     bills: [
       {
-        id: "INV-101",
-        date: "2026-10-12",
-        quantity: 10,
-        rate: 1680,
-        totalAmount: 16800,
-        paidAmount: 10000,
-        balanceAmount: 6800,
-        deliveryStatus: "delivered",
-        notes: "Morning batch"
-      },
-      {
-        id: "INV-102",
-        date: "2026-10-14",
-        quantity: 5,
-        rate: 1680,
-        totalAmount: 8400,
-        paidAmount: 8400,
+        id: "INV-1001",
+        date: "2026-10-15",
+        quantity: 36,
+        rate: 15,
+        totalAmount: 540,
+        paidAmount: 540,
         balanceAmount: 0,
-        deliveryStatus: "pending",
-        notes: "Deliver by evening"
+        deliveryStatus: "delivered",
+        notes: "Morning delivery"
       }
     ],
     payments: []
   },
   {
-    id: "cust-2",
+    id: "cust-skm",
     productId: "prod-1",
-    customerName: "Modern Supermarket",
-    customerPhone: "9745889900",
-    customerPlace: "Calicut",
-    customRate: 1720,
+    customerName: "skm",
+    customerPlace: "kalpatta",
+    customerPhone: "",
+    quantity: 36,
+    customRate: 18,
+    totalAmount: 648,
+    isDelivered: true,
+    isCollected: false,
     bills: [
       {
-        id: "INV-103",
-        date: "2026-10-13",
-        quantity: 15,
-        rate: 1720,
-        totalAmount: 25800,
-        paidAmount: 25800,
-        balanceAmount: 0,
+        id: "INV-1002",
+        date: "2026-10-15",
+        quantity: 36,
+        rate: 18,
+        totalAmount: 648,
+        paidAmount: 0,
+        balanceAmount: 648,
         deliveryStatus: "delivered",
-        notes: "UPI payment"
+        notes: "Pending collection"
       }
     ],
     payments: []
   },
   {
-    id: "cust-3",
-    productId: "prod-2",
-    customerName: "Kerala Bakery & Chips",
-    customerPhone: "9895667788",
-    customerPlace: "Kochi",
-    customRate: 2750,
+    id: "cust-farm-house",
+    productId: "prod-1",
+    customerName: "farm house",
+    customerPlace: "erumad",
+    customerPhone: "",
+    quantity: 36,
+    customRate: 16,
+    totalAmount: 576,
+    isDelivered: true,
+    isCollected: false,
     bills: [
       {
-        id: "INV-201",
-        date: "2026-10-14",
-        quantity: 6,
-        rate: 2750,
-        totalAmount: 16500,
-        paidAmount: 10000,
-        balanceAmount: 6500,
+        id: "INV-1003",
+        date: "2026-10-15",
+        quantity: 36,
+        rate: 16,
+        totalAmount: 576,
+        paidAmount: 0,
+        balanceAmount: 576,
+        deliveryStatus: "delivered",
+        notes: "Pending collection"
+      }
+    ],
+    payments: []
+  },
+  {
+    id: "cust-asif-azna",
+    productId: "prod-1",
+    customerName: "asif azna",
+    customerPlace: "sm",
+    customerPhone: "",
+    quantity: 36,
+    customRate: 15,
+    totalAmount: 540,
+    isDelivered: true,
+    isCollected: true,
+    bills: [
+      {
+        id: "INV-1004",
+        date: "2026-10-15",
+        quantity: 36,
+        rate: 15,
+        totalAmount: 540,
+        paidAmount: 540,
+        balanceAmount: 0,
+        deliveryStatus: "delivered",
+        notes: "Cleared"
+      }
+    ],
+    payments: []
+  },
+  {
+    id: "cust-home-land",
+    productId: "prod-1",
+    customerName: "home land",
+    customerPlace: "kodually",
+    customerPhone: "",
+    quantity: 36,
+    customRate: 18,
+    totalAmount: 648,
+    isDelivered: true,
+    isCollected: true,
+    bills: [
+      {
+        id: "INV-1005",
+        date: "2026-10-15",
+        quantity: 36,
+        rate: 18,
+        totalAmount: 648,
+        paidAmount: 648,
+        balanceAmount: 0,
+        deliveryStatus: "delivered",
+        notes: "Cleared"
+      }
+    ],
+    payments: []
+  },
+  {
+    id: "cust-varnam",
+    productId: "prod-1",
+    customerName: "varnam",
+    customerPlace: "chulliyod",
+    customerPhone: "",
+    quantity: 36,
+    customRate: 18,
+    totalAmount: 648,
+    isDelivered: false,
+    isCollected: false,
+    bills: [
+      {
+        id: "INV-1006",
+        date: "2026-10-16",
+        quantity: 36,
+        rate: 18,
+        totalAmount: 648,
+        paidAmount: 0,
+        balanceAmount: 648,
         deliveryStatus: "pending",
-        notes: "Balance on delivery"
+        notes: "Order placed"
+      }
+    ],
+    payments: []
+  },
+  {
+    id: "cust-sithara-furniture",
+    productId: "prod-1",
+    customerName: "sithara furniture",
+    customerPlace: "erumad",
+    customerPhone: "",
+    quantity: 36,
+    customRate: 16,
+    totalAmount: 576,
+    isDelivered: false,
+    isCollected: false,
+    bills: [
+      {
+        id: "INV-1007",
+        date: "2026-10-16",
+        quantity: 36,
+        rate: 16,
+        totalAmount: 576,
+        paidAmount: 0,
+        balanceAmount: 576,
+        deliveryStatus: "pending",
+        notes: "Order placed"
       }
     ],
     payments: []
   }
 ];
 
-// Helper to compute customer totals
+// Helper to compute customer totals and status
 export const getCustomerStats = (customer) => {
-  const bills = customer.bills || [];
-  const totalBillsAmount = bills.reduce((sum, b) => sum + (Number(b.totalAmount) || 0), 0);
-  const totalPaidAmount = bills.reduce((sum, b) => sum + (Number(b.paidAmount) || 0), 0);
-  const totalBalanceDue = Math.max(0, totalBillsAmount - totalPaidAmount);
-  
-  const pendingDeliveries = bills.filter(b => b.deliveryStatus === 'pending').length;
-  const deliveryStatus = pendingDeliveries > 0 ? 'pending' : (bills.length > 0 ? 'delivered' : 'no_orders');
-  
+  const qty = Number(customer.quantity) || 36;
+  const rate = Number(customer.customRate || customer.price) || 0;
+  const directAmount = Number(customer.totalAmount) || (qty * rate);
+
+  const bills = Array.isArray(customer.bills) ? customer.bills : [];
+  const billsTotal = bills.reduce((sum, b) => sum + (Number(b.totalAmount) || 0), 0);
+  const billsPaid = bills.reduce((sum, b) => sum + (Number(b.paidAmount) || 0), 0);
+  const billsBalance = Math.max(0, billsTotal - billsPaid);
+
+  let totalAmount = directAmount;
+  let totalPaid = customer.isCollected ? directAmount : 0;
+  let totalBalanceDue = customer.isCollected ? 0 : directAmount;
+
+  if (bills.length > 0) {
+    totalAmount = billsTotal;
+    totalPaid = billsPaid;
+    totalBalanceDue = billsBalance;
+  }
+
+  const isDelivered = customer.isDelivered !== undefined 
+    ? Boolean(customer.isDelivered) 
+    : (bills.length > 0 ? !bills.some(b => b.deliveryStatus === 'pending') : true);
+
+  const isCollected = customer.isCollected !== undefined
+    ? Boolean(customer.isCollected)
+    : (totalBalanceDue === 0);
+
   return {
-    totalBillsAmount,
-    totalPaidAmount,
-    totalBalanceDue,
-    pendingDeliveries,
-    deliveryStatus,
+    quantity: qty,
+    rate,
+    totalBillsAmount: totalAmount,
+    totalPaidAmount: totalPaid,
+    totalBalanceDue: isCollected ? 0 : (totalBalanceDue > 0 ? totalBalanceDue : totalAmount),
+    isDelivered,
+    isCollected,
+    pendingDeliveries: isDelivered ? 0 : 1,
+    deliveryStatus: isDelivered ? 'delivered' : 'pending',
     billCount: bills.length,
     payments: customer.payments || [],
     lastBillDate: bills.length > 0 ? bills[bills.length - 1].date : null
@@ -155,7 +273,6 @@ export const applyCustomerPayment = (customer, paymentData) => {
     notes: paymentData.notes || ''
   };
 
-  // Reduce balance from pending bills (oldest unpaid first)
   let remaining = amountToApply;
   const updatedBills = (customer.bills || []).map(b => {
     const curBalance = Number(b.balanceAmount) || 0;
@@ -171,8 +288,12 @@ export const applyCustomerPayment = (customer, paymentData) => {
     return b;
   });
 
+  const stats = getCustomerStats({ ...customer, bills: updatedBills });
+  const isNowCollected = stats.totalBalanceDue <= 0;
+
   return {
     ...customer,
+    isCollected: isNowCollected,
     bills: updatedBills,
     payments: [...(customer.payments || []), newPayment]
   };
@@ -188,12 +309,22 @@ export const getStorageData = () => {
     let products = rawProducts ? JSON.parse(rawProducts) : DEFAULT_PRODUCTS;
     let customers = rawCustomers ? JSON.parse(rawCustomers) : DEFAULT_CUSTOMERS;
 
-    // Ensure payments array exists
-    customers = customers.map(c => ({
-      ...c,
-      bills: Array.isArray(c.bills) ? c.bills : [],
-      payments: Array.isArray(c.payments) ? c.payments : []
-    }));
+    // Ensure all required fields exist for each customer
+    customers = customers.map(c => {
+      const qty = Number(c.quantity) || 36;
+      const rate = Number(c.customRate || c.price) || 16;
+      const amt = Number(c.totalAmount) || (qty * rate);
+      return {
+        ...c,
+        quantity: qty,
+        customRate: rate,
+        totalAmount: amt,
+        isDelivered: c.isDelivered !== undefined ? Boolean(c.isDelivered) : true,
+        isCollected: c.isCollected !== undefined ? Boolean(c.isCollected) : false,
+        bills: Array.isArray(c.bills) ? c.bills : [],
+        payments: Array.isArray(c.payments) ? c.payments : []
+      };
+    });
 
     return { business, products, customers };
   } catch (err) {

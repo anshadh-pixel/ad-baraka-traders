@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Search, ChevronRight, Package, Users, AlertCircle, Edit, Trash2 } from 'lucide-react';
+import { Plus, Search, X, ChevronRight, Package, Users, AlertCircle, Edit, Trash2 } from 'lucide-react';
 import { getCustomerStats } from '../utils/storage';
 
 export default function ProductListView({
@@ -12,7 +12,6 @@ export default function ProductListView({
   onDeleteProduct
 }) {
   const [search, setSearch] = useState('');
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   const filtered = products.filter(p => 
     p.name.toLowerCase().includes(search.toLowerCase())
@@ -30,7 +29,7 @@ export default function ProductListView({
             </span>
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            Select a product to view and manage its customers
+            Select a product to view and manage route customers
           </p>
         </div>
 
@@ -43,29 +42,28 @@ export default function ProductListView({
         </button>
       </div>
 
-      {/* Search Input */}
+      {/* Search Bar with Fixed Padding & Dedicated Clear Button */}
       <div className="relative">
-        <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+        <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none z-10" />
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          onFocus={() => setIsSearchFocused(true)}
-          onBlur={() => setIsSearchFocused(false)}
-          placeholder={isSearchFocused ? "" : "Search products..."}
+          placeholder="Search products..."
           autoComplete="off"
           autoCorrect="off"
           autoCapitalize="none"
           spellCheck="false"
-          name="search_products_query"
-          className="biz-input pl-10 pr-10"
+          className="biz-input search-input"
         />
         {search && (
           <button
+            type="button"
             onClick={() => setSearch('')}
-            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 hover:text-white border border-slate-700"
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-xs font-bold transition-all z-10"
+            title="Clear search"
           >
-            Clear
+            <X className="w-3.5 h-3.5" />
           </button>
         )}
       </div>
@@ -100,10 +98,7 @@ export default function ProductListView({
               return sum + stats.totalBalanceDue;
             }, 0);
 
-            const pendingDeliveries = productCustomers.reduce((sum, c) => {
-              const stats = getCustomerStats(c);
-              return sum + stats.pendingDeliveries;
-            }, 0);
+            const pendingDeliveries = productCustomers.filter(c => !c.isDelivered).length;
 
             return (
               <div
@@ -120,7 +115,7 @@ export default function ProductListView({
                     </div>
 
                     <div className="flex items-center gap-2 mt-1 text-xs text-slate-400">
-                      <span>Default Price:</span>
+                      <span>Base Rate:</span>
                       <span className="font-bold text-slate-200">
                         {currency}{Number(product.basePrice).toLocaleString()} / {product.unit || 'unit'}
                       </span>
@@ -148,7 +143,6 @@ export default function ProductListView({
 
                 {/* Bottom stats & action */}
                 <div className="mt-3 pt-3 border-t border-slate-800/80 space-y-2.5">
-                  {/* Badges Row with flex-wrap and generous gap */}
                   <div className="flex flex-wrap items-center gap-2 text-xs">
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 font-medium">
                       <Users className="w-3.5 h-3.5 text-blue-400" />
@@ -166,16 +160,15 @@ export default function ProductListView({
                     )}
 
                     {pendingDeliveries > 0 && (
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-cyan-300 font-semibold bg-cyan-500/15 border border-cyan-500/30 whitespace-nowrap">
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-amber-300 font-semibold bg-amber-500/15 border border-amber-500/30 whitespace-nowrap">
                         {pendingDeliveries} to deliver
                       </span>
                     )}
                   </div>
 
-                  {/* Clean Action Row with clear right alignment */}
                   <div className="flex items-center justify-end pt-0.5">
                     <div className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600/15 border border-blue-500/30 text-blue-400 font-bold text-xs group-hover:bg-blue-600/25 transition-all">
-                      <span>View Customers</span>
+                      <span>View Route Customers</span>
                       <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                     </div>
                   </div>

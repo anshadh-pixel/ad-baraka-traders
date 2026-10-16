@@ -5,18 +5,19 @@ import ProductCustomersView from './components/ProductCustomersView';
 import CustomerDetailView from './components/CustomerDetailView';
 import ProductModal from './components/ProductModal';
 import CustomerModal from './components/CustomerModal';
+import CreateBillModal from './components/CreateBillModal';
 import BillPhotoModal from './components/BillPhotoModal';
 import PaymentModal from './components/PaymentModal';
 import { 
   getStorageData, 
   saveBusinessData, 
   saveProductsData, 
-  saveCustomersData,
-  applyCustomerPayment,
-  getStoredTheme,
-  saveStoredTheme,
-  resetToDemoData,
-  getCustomerStats
+  saveCustomersData, 
+  applyCustomerPayment, 
+  getStoredTheme, 
+  saveStoredTheme, 
+  resetToDemoData, 
+  getCustomerStats 
 } from './utils/storage';
 
 export default function App() {
@@ -35,13 +36,17 @@ export default function App() {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
   };
 
-  // 3-Level State Navigation:
-  const [selectedProductId, setSelectedProductId] = useState(null);
+  // Direct route navigation: default to first product so user directly sees the 7 Excel customers!
+  const [selectedProductId, setSelectedProductId] = useState(() => {
+    const loadedData = getStorageData();
+    return loadedData.products?.length > 0 ? loadedData.products[0].id : null;
+  });
   const [selectedCustomerId, setSelectedCustomerId] = useState(null);
 
   // Modals
   const [productModal, setProductModal] = useState({ isOpen: false, product: null });
   const [customerModal, setCustomerModal] = useState({ isOpen: false, customer: null, product: null });
+  const [createBillModal, setCreateBillModal] = useState({ isOpen: false, customer: null, product: null });
   const [billPhotoModal, setBillPhotoModal] = useState({ isOpen: false, bill: null, customer: null, product: null });
   const [paymentModal, setPaymentModal] = useState({ isOpen: false, customer: null, currentDue: 0 });
   const [toast, setToast] = useState('');
@@ -51,8 +56,46 @@ export default function App() {
     setTimeout(() => setToast(''), 2500);
   };
 
-  const selectedProduct = products.find(p => p.id === selectedProductId) || null;
+  const selectedProduct = products.find(p => p.id === selectedProductId) || products[0] || null;
   const selectedCustomer = customers.find(c => c.id === selectedCustomerId) || null;
+
+  // 1-Tap Toggle: Delivery Status
+  const handleToggleDelivery = (customerId) => {
+    const updatedCustomers = customers.map(c => {
+      if (c.id === customerId) {
+        const nextDel = !c.isDelivered;
+        return {
+          ...c,
+          isDelivered: nextDel
+        };
+      }
+      return c;
+    });
+
+    saveCustomersData(updatedCustomers);
+    setData(prev => ({ ...prev, customers: updatedCustomers }));
+    const target = updatedCustomers.find(c => c.id === customerId);
+    showToast(`${target.customerName}: ${target.isDelivered ? '✅ Marked Delivered' : '⏳ Marked To Deliver'}`);
+  };
+
+  // 1-Tap Toggle: Amount Collected Status
+  const handleToggleCollected = (customerId) => {
+    const updatedCustomers = customers.map(c => {
+      if (c.id === customerId) {
+        const nextCol = !c.isCollected;
+        return {
+          ...c,
+          isCollected: nextCol
+        };
+      }
+      return c;
+    });
+
+    saveCustomersData(updatedCustomers);
+    setData(prev => ({ ...prev, customers: updatedCustomers }));
+    const target = updatedCustomers.find(c => c.id === customerId);
+    showToast(`${target.customerName}: ${target.isCollected ? '✅ Amount Collected' : '⏳ Payment Due'}`);
+  };
 
   // PRODUCT HANDLERS
   const handleSaveProduct = (productData) => {
@@ -70,14 +113,14 @@ export default function App() {
   };
 
   const handleDeleteProduct = (productId) => {
-    if (window.confirm("Delete this product and all its customer orders?")) {
+    if (window.confirm("Delete this product and all its customer records?")) {
       const updatedProducts = products.filter(p => p.id !== productId);
       const updatedCustomers = customers.filter(c => c.productId !== productId);
       saveProductsData(updatedProducts);
       saveCustomersData(updatedCustomers);
       setData(prev => ({ ...prev, products: updatedProducts, customers: updatedCustomers }));
       if (selectedProductId === productId) {
-        setSelectedProductId(null);
+        setSelectedProductId(updatedProducts.length > 0 ? updatedProducts[0].id : null);
         setSelectedCustomerId(null);
       }
       showToast("Product deleted");
@@ -90,10 +133,10 @@ export default function App() {
     const exists = customers.some(c => c.id === customerData.id);
     if (exists) {
       updatedCustomers = customers.map(c => c.id === customerData.id ? customerData : c);
-      showToast(`Saved customer ${customerData.customerName}`);
+      showToast(`Saved customer "${customerData.customerName}"`);
     } else {
       updatedCustomers = [customerData, ...customers];
-      showToast(`Added customer ${customerData.customerName}`);
+      showToast(`Added customer "${customerData.customerName}"`);
     }
     saveCustomersData(updatedCustomers);
     setData(prev => ({ ...prev, customers: updatedCustomers }));
@@ -113,7 +156,37 @@ export default function App() {
     handleSaveCustomer(updatedCustomer);
   };
 
-  // Record Payment received from customer (reduces pending dues!)
+  // Bill Creation Handler (Separate bill workflow as requested!)
+  const handleSaveBill = (billData, customer, openPhotoModal = false) => {
+    const currentBills = Array.isArray(customer.bills) ? customer.bills : [];
+    const updatedBills = [...currentBills, billData];
+    
+    // Auto-update customer delivered and collected state if bill is paid and delivered
+    const isNowCollected = billData.balanceAmount <= 0;
+    const isNowDelivered = billData.deliveryStatus === 'delivered';
+
+    const updatedCustomer = {
+      ...customer,
+      isCollected: isNowCollected ? true : customer.isCollected,
+      isDelivered: isNowDelivered ? true : customer.isDelivered,
+      bills: updatedBills
+    };
+
+    handleSaveCustomer(updatedCustomer);
+
+    if (openPhotoModal) {
+      setBillPhotoModal({
+        isOpen: true,
+        bill: billData,
+        customer: updatedCustomer,
+        product: selectedProduct
+      });
+    } else {
+      showToast(`Bill created for ${customer.customerName}`);
+    }
+  };
+
+  // Payment Recording
   const handleSavePayment = (paymentData) => {
     if (!paymentModal.customer) return;
     const updatedCustomer = applyCustomerPayment(paymentModal.customer, paymentData);
@@ -121,15 +194,11 @@ export default function App() {
     showToast(`Payment of ${business?.currency || '₹'}${paymentData.amount} recorded!`);
   };
 
-  // Reset Demo Data
-  const handleResetDemo = () => {
-    if (window.confirm("Reload default sample business products and customers?")) {
-      const newData = resetToDemoData();
-      setData(newData);
-      setSelectedProductId(null);
-      setSelectedCustomerId(null);
-      showToast("Sample data reloaded!");
-    }
+  // Safe Refresh/Sync Data Handler (Never deletes data!)
+  const handleRefreshData = () => {
+    const freshData = getStorageData();
+    setData(freshData);
+    showToast("✅ Data Synced & Refreshed!");
   };
 
   const currentCustomerStats = selectedCustomer ? getCustomerStats(selectedCustomer) : null;
@@ -138,23 +207,23 @@ export default function App() {
     <div className={`min-h-screen ${theme === 'light' ? 'bg-[#f1f5f9]' : 'bg-[#0b0f19]'} transition-colors flex flex-col font-sans`}>
       {/* Toast Alert */}
       {toast && (
-        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-xl bg-blue-600 text-white font-bold text-xs shadow-lg animate-fade-in">
+        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-xl bg-blue-600 text-white font-bold text-xs shadow-lg animate-fade-in pointer-events-none">
           {toast}
         </div>
       )}
 
-      {/* Header with Theme Toggle */}
+      {/* Header with Theme Toggle & Safe Sync Button */}
       <Header
         business={business}
         theme={theme}
         onToggleTheme={handleToggleTheme}
-        onResetData={handleResetDemo}
+        onRefreshData={handleRefreshData}
       />
 
       {/* Main Content Area */}
       <main className="flex-1 w-full max-w-xl mx-auto px-4 pt-4 pb-12 safe-bottom-area">
-        {/* LEVEL 1: PRODUCTS LIST */}
-        {!selectedProduct && (
+        {/* LEVEL 1: PRODUCTS LIST (Shown only when user explicitly goes back to Products) */}
+        {!selectedProductId && (
           <ProductListView
             products={products}
             customers={customers}
@@ -169,8 +238,8 @@ export default function App() {
           />
         )}
 
-        {/* LEVEL 2: CUSTOMERS FOR SELECTED PRODUCT */}
-        {selectedProduct && !selectedCustomer && (
+        {/* LEVEL 2: CUSTOMERS FOR SELECTED PRODUCT (Excel-Style Direct Sales View) */}
+        {selectedProductId && !selectedCustomerId && selectedProduct && (
           <ProductCustomersView
             product={selectedProduct}
             customers={customers}
@@ -183,11 +252,14 @@ export default function App() {
             onAddCustomer={(p) => setCustomerModal({ isOpen: true, customer: null, product: p })}
             onEditCustomer={(c) => setCustomerModal({ isOpen: true, customer: c, product: selectedProduct })}
             onDeleteCustomer={handleDeleteCustomer}
+            onToggleDelivery={handleToggleDelivery}
+            onToggleCollected={handleToggleCollected}
+            onOpenCreateBill={(c) => setCreateBillModal({ isOpen: true, customer: c, product: selectedProduct })}
           />
         )}
 
-        {/* LEVEL 3: CUSTOMER DETAILS & NEW BILL ENTRY */}
-        {selectedProduct && selectedCustomer && (
+        {/* LEVEL 3: CUSTOMER DETAILS & BILL HISTORY */}
+        {selectedProductId && selectedCustomerId && selectedCustomer && (
           <CustomerDetailView
             customer={selectedCustomer}
             product={selectedProduct}
@@ -226,7 +298,20 @@ export default function App() {
         />
       )}
 
-      {/* MODAL: PROFESSIONAL BILL PHOTO (IMAGE GENERATOR & WHATSAPP SHARE) */}
+      {/* MODAL: SEPARATE CREATE BILL (As Requested by User!) */}
+      {createBillModal.isOpen && (
+        <CreateBillModal
+          isOpen={createBillModal.isOpen}
+          onClose={() => setCreateBillModal({ isOpen: false, customer: null, product: null })}
+          onSaveBill={handleSaveBill}
+          initialCustomer={createBillModal.customer}
+          customers={customers.filter(c => c.productId === (selectedProduct?.id || 'prod-1'))}
+          product={selectedProduct}
+          currency={business?.currency || "₹"}
+        />
+      )}
+
+      {/* MODAL: OFFICIAL BILL PHOTO (WHATSAPP SHARE & IMAGE DOWNLOAD) */}
       {billPhotoModal.isOpen && billPhotoModal.bill && (
         <BillPhotoModal
           isOpen={billPhotoModal.isOpen}
@@ -239,7 +324,7 @@ export default function App() {
         />
       )}
 
-      {/* MODAL: RECORD PAYMENT RECEIVED AGAINST DUES */}
+      {/* MODAL: RECORD PAYMENT RECEIVED */}
       {paymentModal.isOpen && paymentModal.customer && (
         <PaymentModal
           isOpen={paymentModal.isOpen}
