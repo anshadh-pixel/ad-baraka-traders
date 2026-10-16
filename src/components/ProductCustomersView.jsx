@@ -12,8 +12,7 @@ import {
   Receipt, 
   Check, 
   Package, 
-  FileText,
-  Truck
+  FileText
 } from 'lucide-react';
 import { getCustomerStats } from '../utils/storage';
 
@@ -28,7 +27,7 @@ export default function ProductCustomersView({
   onOpenCreateBill
 }) {
   const [search, setSearch] = useState('');
-  // Primary Tabs: 'customers' (2-line delivered list) or 'pending_orders' (orders to deliver) or 'all'
+  // Primary Tabs: 'customers' (2-line delivered list) or 'pending_orders' (orders to deliver)
   const [activeTab, setActiveTab] = useState('customers');
 
   // Customers for this specific product
@@ -39,31 +38,25 @@ export default function ProductCustomersView({
   const pendingOrders = productCustomers.filter(c => !c.isDelivered);
 
   // Route Totals
-  const totalCustomersCount = productCustomers.length;
   const pendingOrdersCount = pendingOrders.length;
   
-  // 1. Pending Bill Amount (amount yet to be collected)
-  const billAmountPending = productCustomers.reduce((sum, c) => {
-    if (!c.isCollected) {
-      const qty = Number(c.quantity) || 36;
-      const rate = Number(c.customRate || c.price) || 0;
-      return sum + (Number(c.totalAmount) || (qty * rate));
-    }
-    return sum;
+  // 1. Total Bill Amount Pending (Due Amt Total Value across all customers)
+  const totalDuePending = productCustomers.reduce((sum, c) => {
+    const stats = getCustomerStats(c);
+    return sum + stats.totalBalanceDue;
   }, 0);
 
   // 2. Total Collected Amount
   const totalCollectedAmount = productCustomers.reduce((sum, c) => {
-    if (c.isCollected) {
-      const qty = Number(c.quantity) || 36;
-      const rate = Number(c.customRate || c.price) || 0;
-      return sum + (Number(c.totalAmount) || (qty * rate));
-    }
-    return sum;
+    const stats = getCustomerStats(c);
+    return sum + stats.totalPaidAmount;
   }, 0);
 
   // 3. Total Route Sales Value
-  const totalSalesValue = billAmountPending + totalCollectedAmount;
+  const totalSalesValue = productCustomers.reduce((sum, c) => {
+    const stats = getCustomerStats(c);
+    return sum + stats.totalBillsAmount;
+  }, 0);
 
   // Determine which list to display based on activeTab
   let displayList = deliveredCustomers;
@@ -81,6 +74,29 @@ export default function ProductCustomersView({
     const placeMatch = c.customerPlace && c.customerPlace.toLowerCase().includes(q);
     const phoneMatch = c.customerPhone && c.customerPhone.includes(q);
     return nameMatch || placeMatch || phoneMatch;
+  });
+
+  // REQUIREMENT 2: Due ulla customer eppayum mukalil varanam!
+  const sortedFilteredList = [...filteredList].sort((a, b) => {
+    const statsA = getCustomerStats(a);
+    const statsB = getCustomerStats(b);
+
+    const hasDueA = statsA.totalBalanceDue > 0;
+    const hasDueB = statsB.totalBalanceDue > 0;
+
+    // 1. Customers with pending due ALWAYS at the top
+    if (hasDueA && !hasDueB) return -1;
+    if (!hasDueA && hasDueB) return 1;
+
+    // 2. If both have due, sort highest due amount first
+    if (hasDueA && hasDueB) {
+      if (statsB.totalBalanceDue !== statsA.totalBalanceDue) {
+        return statsB.totalBalanceDue - statsA.totalBalanceDue;
+      }
+    }
+
+    // 3. Then alphabetical by customer name
+    return a.customerName.localeCompare(b.customerName);
   });
 
   return (
@@ -139,7 +155,7 @@ export default function ProductCustomersView({
             </div>
           </div>
 
-          {/* The 3 Core Metrics: Pending Order, Bill Amount Pending, Total Collected Amount */}
+          {/* REQUIREMENT 1: The 3 Core Metrics (Pending Orders, Bill Amt Pending = Due Amt Total Value, Total Collected) */}
           <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800/80">
             {/* 1. Pending Orders */}
             <div 
@@ -161,21 +177,21 @@ export default function ProductCustomersView({
               </span>
             </div>
 
-            {/* 2. Bill Amount Pending */}
+            {/* 2. Bill Amt Pending (Due Amt Total Value) */}
             <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-center">
-              <span className="text-[10px] text-slate-400 block font-semibold">
+              <span className="text-[10px] text-slate-400 block font-semibold truncate">
                 Bill Amt Pending
               </span>
               <span className={`text-sm font-extrabold mt-0.5 block ${
-                billAmountPending > 0 ? 'text-rose-400' : 'text-slate-400'
+                totalDuePending > 0 ? 'text-amber-400' : 'text-slate-400'
               }`}>
-                {billAmountPending > 0 ? `${currency}${billAmountPending.toLocaleString()}` : '₹0'}
+                {currency}{totalDuePending.toLocaleString()}
               </span>
             </div>
 
             {/* 3. Total Collected Amount */}
             <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-center">
-              <span className="text-[10px] text-slate-400 block font-semibold">
+              <span className="text-[10px] text-slate-400 block font-semibold truncate">
                 Total Collected
               </span>
               <span className="text-sm font-extrabold text-emerald-400 mt-0.5 block">
@@ -253,11 +269,11 @@ export default function ProductCustomersView({
       </div>
 
       {/* ------------------------------------------------------------- */}
-      {/* TAB 1: CUSTOMERS (2-LINE COMPACT LIST - NO ENDLESS SCROLLING) */}
+      {/* TAB 1: CUSTOMERS (2-LINE COMPACT LIST - DUE CUSTOMERS ON TOP!) */}
       {/* ------------------------------------------------------------- */}
       {activeTab === 'customers' && (
         <div className="space-y-2">
-          {filteredList.length === 0 ? (
+          {sortedFilteredList.length === 0 ? (
             <div className="biz-card p-8 text-center space-y-3">
               <Package className="w-10 h-10 text-slate-500 mx-auto" />
               <div>
@@ -278,18 +294,24 @@ export default function ProductCustomersView({
               )}
             </div>
           ) : (
-            filteredList.map(customer => {
+            sortedFilteredList.map(customer => {
+              const stats = getCustomerStats(customer);
               const qty = Number(customer.quantity) || 36;
               const rate = Number(customer.customRate || customer.price) || 0;
               const amt = Number(customer.totalAmount) || (qty * rate);
+              const hasDue = stats.totalBalanceDue > 0;
 
               return (
                 <div
                   key={customer.id}
                   onClick={() => onSelectCustomer(customer)}
-                  className="p-3 rounded-xl biz-card biz-card-hover cursor-pointer border border-slate-800/90 transition-all active:scale-[0.99] flex items-center justify-between gap-3 shadow-xs"
+                  className={`p-3 rounded-xl biz-card biz-card-hover cursor-pointer border transition-all active:scale-[0.99] flex items-center justify-between gap-3 shadow-xs ${
+                    hasDue 
+                      ? 'border-amber-500/40 bg-amber-500/[0.03]' 
+                      : 'border-slate-800/90'
+                  }`}
                 >
-                  {/* Left: Line 1 (Name & Place) and Line 2 (Delivered & Paid status) */}
+                  {/* Left: Line 1 (Name & Place) and Line 2 (Delivered & Paid/Due status) */}
                   <div className="min-w-0 flex-1">
                     {/* LINE 1: Name and Place */}
                     <div className="flex items-center gap-1.5 min-w-0">
@@ -314,13 +336,13 @@ export default function ProductCustomersView({
 
                       <span className="text-slate-600 text-xs">•</span>
 
-                      {customer.isCollected ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-400">
-                          <span>Paid ({currency}{amt})</span>
+                      {hasDue ? (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-bold text-amber-300 bg-amber-500/15 border border-amber-500/30">
+                          <span>Due: {currency}{stats.totalBalanceDue.toLocaleString()}</span>
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-bold text-rose-300 bg-rose-500/15 border border-rose-500/30">
-                          <span>Due: {currency}{amt}</span>
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-400">
+                          <span>Paid ({currency}{amt.toLocaleString()})</span>
                         </span>
                       )}
                     </div>
@@ -350,7 +372,7 @@ export default function ProductCustomersView({
       {/* ------------------------------------------------------------- */}
       {activeTab === 'pending_orders' && (
         <div className="space-y-3">
-          {filteredList.length === 0 ? (
+          {sortedFilteredList.length === 0 ? (
             <div className="biz-card p-8 text-center space-y-3">
               <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto" />
               <div>
@@ -367,7 +389,7 @@ export default function ProductCustomersView({
               </button>
             </div>
           ) : (
-            filteredList.map(customer => {
+            sortedFilteredList.map(customer => {
               const qty = Number(customer.quantity) || 36;
               const rate = Number(customer.customRate || customer.price) || 0;
               const amt = Number(customer.totalAmount) || (qty * rate);
