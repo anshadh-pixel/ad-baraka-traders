@@ -5,21 +5,15 @@ import {
   Search, 
   X, 
   MapPin, 
-  Phone, 
-  PhoneCall, 
-  Send, 
   CheckCircle2, 
   Clock, 
   AlertCircle, 
-  FileText, 
-  Edit2, 
-  Trash2, 
-  Tag, 
-  PackageCheck, 
+  ChevronRight, 
+  Receipt, 
   Check, 
-  ChevronRight,
-  TrendingUp,
-  Receipt
+  Package, 
+  FileText,
+  Truck
 } from 'lucide-react';
 import { getCustomerStats } from '../utils/storage';
 
@@ -30,31 +24,36 @@ export default function ProductCustomersView({
   onBack,
   onSelectCustomer,
   onAddCustomer,
-  onEditCustomer,
-  onDeleteCustomer,
-  onToggleDelivery,
-  onToggleCollected,
+  onDeliverOrder,
   onOpenCreateBill
 }) {
   const [search, setSearch] = useState('');
-  const [filterTab, setFilterTab] = useState('all'); // 'all', 'pending_del', 'pending_pay', 'delivered', 'collected'
+  // Primary Tabs: 'customers' (2-line delivered list) or 'pending_orders' (orders to deliver) or 'all'
+  const [activeTab, setActiveTab] = useState('customers');
 
-  // Only customers who buy this specific product
+  // Customers for this specific product
   const productCustomers = customers.filter(c => c.productId === product.id);
 
-  // Totals calculated like Excel sheet
-  const totalCustomers = productCustomers.length;
-  const totalAmountSum = productCustomers.reduce((sum, c) => {
-    const qty = Number(c.quantity) || 36;
-    const rate = Number(c.customRate || c.price) || 0;
-    return sum + (Number(c.totalAmount) || (qty * rate));
+  // Delivered vs Pending Orders
+  const deliveredCustomers = productCustomers.filter(c => c.isDelivered);
+  const pendingOrders = productCustomers.filter(c => !c.isDelivered);
+
+  // Route Totals
+  const totalCustomersCount = productCustomers.length;
+  const pendingOrdersCount = pendingOrders.length;
+  
+  // 1. Pending Bill Amount (amount yet to be collected)
+  const billAmountPending = productCustomers.reduce((sum, c) => {
+    if (!c.isCollected) {
+      const qty = Number(c.quantity) || 36;
+      const rate = Number(c.customRate || c.price) || 0;
+      return sum + (Number(c.totalAmount) || (qty * rate));
+    }
+    return sum;
   }, 0);
 
-  const deliveredCount = productCustomers.filter(c => c.isDelivered).length;
-  const pendingDelCount = totalCustomers - deliveredCount;
-
-  const collectedCount = productCustomers.filter(c => c.isCollected).length;
-  const collectedAmount = productCustomers.reduce((sum, c) => {
+  // 2. Total Collected Amount
+  const totalCollectedAmount = productCustomers.reduce((sum, c) => {
     if (c.isCollected) {
       const qty = Number(c.quantity) || 36;
       const rate = Number(c.customRate || c.price) || 0;
@@ -62,29 +61,31 @@ export default function ProductCustomersView({
     }
     return sum;
   }, 0);
-  const pendingAmount = totalAmountSum - collectedAmount;
 
-  // Filter logic
-  const filtered = productCustomers.filter(c => {
-    // Search match
+  // 3. Total Route Sales Value
+  const totalSalesValue = billAmountPending + totalCollectedAmount;
+
+  // Determine which list to display based on activeTab
+  let displayList = deliveredCustomers;
+  if (activeTab === 'pending_orders') {
+    displayList = pendingOrders;
+  } else if (activeTab === 'all') {
+    displayList = productCustomers;
+  }
+
+  // Filter with Search
+  const filteredList = displayList.filter(c => {
     const q = search.toLowerCase().trim();
+    if (!q) return true;
     const nameMatch = c.customerName.toLowerCase().includes(q);
     const placeMatch = c.customerPlace && c.customerPlace.toLowerCase().includes(q);
     const phoneMatch = c.customerPhone && c.customerPhone.includes(q);
-    const matchesSearch = !q || nameMatch || placeMatch || phoneMatch;
-
-    if (!matchesSearch) return false;
-
-    if (filterTab === 'pending_del') return !c.isDelivered;
-    if (filterTab === 'delivered') return c.isDelivered;
-    if (filterTab === 'pending_pay') return !c.isCollected;
-    if (filterTab === 'collected') return c.isCollected;
-    return true;
+    return nameMatch || placeMatch || phoneMatch;
   });
 
   return (
     <div className="space-y-4 pb-20">
-      {/* Top Header & Navigation */}
+      {/* Top Header Navigation */}
       <div className="space-y-3 pt-1">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <button
@@ -99,7 +100,7 @@ export default function ProductCustomersView({
             {/* Separate Bill Action Button */}
             <button
               onClick={() => onOpenCreateBill(null)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm transition-all"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm transition-all active:scale-95"
               title="Create a new bill or invoice"
             >
               <Receipt className="w-4 h-4" />
@@ -109,7 +110,7 @@ export default function ProductCustomersView({
             {/* Add Customer Button */}
             <button
               onClick={() => onAddCustomer(product)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-sm transition-all"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-sm transition-all active:scale-95"
             >
               <Plus className="w-4 h-4" />
               <span>Add Customer</span>
@@ -117,12 +118,12 @@ export default function ProductCustomersView({
           </div>
         </div>
 
-        {/* Excel Summary Banner (Matches Excel Columns & Totals) */}
+        {/* Product Details Banner with the 3 Required Metrics */}
         <div className="biz-card p-4 space-y-3">
           <div className="flex items-center justify-between">
             <div>
               <span className="text-[10px] font-bold uppercase tracking-wider text-blue-400 block">
-                Route Sales Summary (ഡാറ്റാ സംഗ്രഹം)
+                Product Details & Summary
               </span>
               <h2 className="text-base font-extrabold text-white">
                 {product.name}
@@ -132,121 +133,106 @@ export default function ProductCustomersView({
               <span className="text-[10px] uppercase font-bold text-slate-400 block">
                 Total Route Value
               </span>
-              <span className="text-lg font-black text-white">
-                {currency}{totalAmountSum.toLocaleString()}
+              <span className="text-base font-black text-white">
+                {currency}{totalSalesValue.toLocaleString()}
               </span>
             </div>
           </div>
 
-          {/* 4 Stat Badges matching Excel columns */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 border-t border-slate-800/80">
-            {/* 1. Total Customers */}
-            <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800">
-              <span className="text-[10px] text-slate-400 block font-semibold">Customers</span>
-              <span className="text-sm font-extrabold text-white mt-0.5 block">
-                {totalCustomers} Shops
+          {/* The 3 Core Metrics: Pending Order, Bill Amount Pending, Total Collected Amount */}
+          <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800/80">
+            {/* 1. Pending Orders */}
+            <div 
+              onClick={() => setActiveTab('pending_orders')}
+              className={`p-2.5 rounded-xl border text-center cursor-pointer transition-all ${
+                activeTab === 'pending_orders'
+                  ? 'bg-amber-500/20 border-amber-500/50 shadow-xs'
+                  : 'bg-slate-900 border-slate-800 hover:border-slate-700'
+              }`}
+            >
+              <span className="text-[10px] text-slate-400 block font-semibold">
+                Pending Orders
+              </span>
+              <span className={`text-sm font-extrabold mt-0.5 block flex items-center justify-center gap-1 ${
+                pendingOrdersCount > 0 ? 'text-amber-400' : 'text-slate-400'
+              }`}>
+                <Clock className="w-3.5 h-3.5 inline" />
+                <span>{pendingOrdersCount} {pendingOrdersCount === 1 ? 'Order' : 'Orders'}</span>
               </span>
             </div>
 
-            {/* 2. Delivered Status */}
-            <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800">
-              <span className="text-[10px] text-slate-400 block font-semibold">Delivered</span>
-              <span className="text-sm font-extrabold text-emerald-400 mt-0.5 block flex items-center gap-1">
-                <span>{deliveredCount} / {totalCustomers}</span>
-                {pendingDelCount > 0 && (
-                  <span className="text-[10px] text-amber-400 font-normal">({pendingDelCount} left)</span>
-                )}
+            {/* 2. Bill Amount Pending */}
+            <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-center">
+              <span className="text-[10px] text-slate-400 block font-semibold">
+                Bill Amt Pending
+              </span>
+              <span className={`text-sm font-extrabold mt-0.5 block ${
+                billAmountPending > 0 ? 'text-rose-400' : 'text-slate-400'
+              }`}>
+                {billAmountPending > 0 ? `${currency}${billAmountPending.toLocaleString()}` : '₹0'}
               </span>
             </div>
 
-            {/* 3. Amount Collected */}
-            <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800">
-              <span className="text-[10px] text-slate-400 block font-semibold">Collected</span>
+            {/* 3. Total Collected Amount */}
+            <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-center">
+              <span className="text-[10px] text-slate-400 block font-semibold">
+                Total Collected
+              </span>
               <span className="text-sm font-extrabold text-emerald-400 mt-0.5 block">
-                {currency}{collectedAmount.toLocaleString()}
-              </span>
-            </div>
-
-            {/* 4. Amount Pending */}
-            <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800">
-              <span className="text-[10px] text-slate-400 block font-semibold">Pending Due</span>
-              <span className={`text-sm font-extrabold mt-0.5 block ${pendingAmount > 0 ? 'text-amber-400' : 'text-slate-400'}`}>
-                {pendingAmount > 0 ? `${currency}${pendingAmount.toLocaleString()}` : 'Nil (All Paid)'}
+                {currency}{totalCollectedAmount.toLocaleString()}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Filter Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs no-scrollbar">
+        {/* Primary Tabs: Customers vs Pending Orders */}
+        <div className="grid grid-cols-2 gap-2 p-1 bg-slate-900/90 border border-slate-800 rounded-xl">
           <button
-            onClick={() => setFilterTab('all')}
-            className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all ${
-              filterTab === 'all'
-                ? 'bg-blue-600 text-white shadow-xs'
-                : 'bg-slate-800 text-slate-400 hover:text-white border border-slate-700'
+            onClick={() => setActiveTab('customers')}
+            className={`py-2 px-3 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition-all ${
+              activeTab === 'customers'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'text-slate-400 hover:text-white'
             }`}
           >
-            All ({totalCustomers})
+            <span>Customers (കസ്റ്റമേഴ്സ്)</span>
+            <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+              activeTab === 'customers' ? 'bg-white/20 text-white' : 'bg-slate-800 text-slate-400'
+            }`}>
+              {deliveredCustomers.length}
+            </span>
           </button>
 
           <button
-            onClick={() => setFilterTab('pending_del')}
-            className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all flex items-center gap-1 ${
-              filterTab === 'pending_del'
-                ? 'bg-amber-600 text-white shadow-xs'
-                : 'bg-slate-800 text-slate-400 hover:text-white border border-slate-700'
+            onClick={() => setActiveTab('pending_orders')}
+            className={`py-2 px-3 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition-all ${
+              activeTab === 'pending_orders'
+                ? 'bg-amber-600 text-white shadow-sm'
+                : 'text-slate-400 hover:text-white'
             }`}
           >
             <Clock className="w-3.5 h-3.5" />
-            <span>To Deliver ({pendingDelCount})</span>
-          </button>
-
-          <button
-            onClick={() => setFilterTab('pending_pay')}
-            className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all flex items-center gap-1 ${
-              filterTab === 'pending_pay'
-                ? 'bg-rose-600 text-white shadow-xs'
-                : 'bg-slate-800 text-slate-400 hover:text-white border border-slate-700'
-            }`}
-          >
-            <AlertCircle className="w-3.5 h-3.5" />
-            <span>Payment Due ({totalCustomers - collectedCount})</span>
-          </button>
-
-          <button
-            onClick={() => setFilterTab('delivered')}
-            className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all flex items-center gap-1 ${
-              filterTab === 'delivered'
-                ? 'bg-emerald-600 text-white shadow-xs'
-                : 'bg-slate-800 text-slate-400 hover:text-white border border-slate-700'
-            }`}
-          >
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>Delivered ({deliveredCount})</span>
-          </button>
-
-          <button
-            onClick={() => setFilterTab('collected')}
-            className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all flex items-center gap-1 ${
-              filterTab === 'collected'
-                ? 'bg-emerald-600 text-white shadow-xs'
-                : 'bg-slate-800 text-slate-400 hover:text-white border border-slate-700'
-            }`}
-          >
-            <Check className="w-3.5 h-3.5" />
-            <span>Paid ({collectedCount})</span>
+            <span>Pending Orders (പെൻഡിംഗ്)</span>
+            {pendingOrdersCount > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-white text-amber-900 font-extrabold">
+                {pendingOrdersCount}
+              </span>
+            )}
           </button>
         </div>
 
-        {/* Search Bar with Fixed Padding & Dedicated Clear Button */}
+        {/* Search Bar with Fixed Padding & Clear Button */}
         <div className="relative">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none z-10" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search customer by name or place..."
+            placeholder={
+              activeTab === 'pending_orders'
+                ? "Search pending orders..."
+                : "Search customer by name or place..."
+            }
             autoComplete="off"
             autoCorrect="off"
             autoCapitalize="none"
@@ -266,205 +252,191 @@ export default function ProductCustomersView({
         </div>
       </div>
 
-      {/* Customer Cards List */}
-      {filtered.length === 0 ? (
-        <div className="biz-card p-8 text-center space-y-3 mt-4">
-          <div className="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center mx-auto text-slate-400">
-            <Tag className="w-6 h-6 text-blue-400" />
-          </div>
-          <div>
-            <h3 className="font-bold text-white text-base">No Customers Found</h3>
-            <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-              {search 
-                ? `No customers match "${search}".` 
-                : "No customers match the selected filter."}
-            </p>
-          </div>
-          {search && (
-            <button
-              onClick={() => setSearch('')}
-              className="px-4 py-2 rounded-xl bg-slate-800 text-white font-bold text-xs border border-slate-700"
-            >
-              Clear Search
-            </button>
-          )}
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {filtered.map(customer => {
-            const qty = Number(customer.quantity) || 36;
-            const price = Number(customer.customRate || customer.price) || 0;
-            const amt = Number(customer.totalAmount) || (qty * price);
-            const isDel = Boolean(customer.isDelivered);
-            const isCol = Boolean(customer.isCollected);
+      {/* ------------------------------------------------------------- */}
+      {/* TAB 1: CUSTOMERS (2-LINE COMPACT LIST - NO ENDLESS SCROLLING) */}
+      {/* ------------------------------------------------------------- */}
+      {activeTab === 'customers' && (
+        <div className="space-y-2">
+          {filteredList.length === 0 ? (
+            <div className="biz-card p-8 text-center space-y-3">
+              <Package className="w-10 h-10 text-slate-500 mx-auto" />
+              <div>
+                <h3 className="font-bold text-white text-sm">No Delivered Customers Yet</h3>
+                <p className="text-xs text-slate-400 mt-1">
+                  {pendingOrdersCount > 0 
+                    ? `You have ${pendingOrdersCount} pending orders! Switch to 'Pending Orders' tab and tap 'Deliver' to add them here.`
+                    : "Click '+ Add Customer' to add customer records."}
+                </p>
+              </div>
+              {pendingOrdersCount > 0 && (
+                <button
+                  onClick={() => setActiveTab('pending_orders')}
+                  className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs"
+                >
+                  View {pendingOrdersCount} Pending Orders →
+                </button>
+              )}
+            </div>
+          ) : (
+            filteredList.map(customer => {
+              const qty = Number(customer.quantity) || 36;
+              const rate = Number(customer.customRate || customer.price) || 0;
+              const amt = Number(customer.totalAmount) || (qty * rate);
 
-            return (
-              <div
-                key={customer.id}
-                className="biz-card p-4 space-y-3 relative transition-all border border-slate-800"
-              >
-                {/* Row 1: Name, Place & Actions */}
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <h3 className="font-extrabold text-base text-white tracking-tight capitalize">
-                      {customer.customerName}
-                    </h3>
-                    <div className="flex items-center gap-2 mt-0.5 text-xs text-slate-400">
+              return (
+                <div
+                  key={customer.id}
+                  onClick={() => onSelectCustomer(customer)}
+                  className="p-3 rounded-xl biz-card biz-card-hover cursor-pointer border border-slate-800/90 transition-all active:scale-[0.99] flex items-center justify-between gap-3 shadow-xs"
+                >
+                  {/* Left: Line 1 (Name & Place) and Line 2 (Delivered & Paid status) */}
+                  <div className="min-w-0 flex-1">
+                    {/* LINE 1: Name and Place */}
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <h4 className="font-extrabold text-sm text-white capitalize truncate group-hover:text-blue-400 transition-colors">
+                        {customer.customerName}
+                      </h4>
                       {customer.customerPlace && (
-                        <span className="flex items-center gap-1 text-slate-300">
-                          <MapPin className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
-                          <span className="capitalize">{customer.customerPlace}</span>
+                        <span className="text-xs text-slate-400 capitalize truncate flex items-center gap-0.5 flex-shrink-0">
+                          <span className="text-slate-600">•</span>
+                          <MapPin className="w-3 h-3 text-blue-400 inline" />
+                          <span>{customer.customerPlace}</span>
                         </span>
                       )}
-                      {customer.customerPhone && (
-                        <span className="text-slate-400">
-                          • 📞 {customer.customerPhone}
+                    </div>
+
+                    {/* LINE 2: Delivered badge & Amount pending/collected badge */}
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-400">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Delivered</span>
+                      </span>
+
+                      <span className="text-slate-600 text-xs">•</span>
+
+                      {customer.isCollected ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-400">
+                          <span>Paid ({currency}{amt})</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-bold text-rose-300 bg-rose-500/15 border border-rose-500/30">
+                          <span>Due: {currency}{amt}</span>
                         </span>
                       )}
                     </div>
                   </div>
 
-                  {/* Edit & Delete Action Icons */}
-                  <div className="flex items-center gap-1.5 flex-shrink-0">
-                    {/* Quick WhatsApp or Call if phone exists */}
-                    {customer.customerPhone && (
-                      <a
-                        href={`https://wa.me/${customer.customerPhone.replace(/\D/g, '')}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="p-1.5 rounded-lg bg-[#25D366]/15 text-[#25D366] hover:bg-[#25D366]/25 border border-[#25D366]/30"
-                        title="Chat on WhatsApp"
-                      >
-                        <Send className="w-3.5 h-3.5" />
-                      </a>
-                    )}
-                    <button
-                      onClick={() => onEditCustomer(customer)}
-                      className="p-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white border border-slate-700"
-                      title="Edit customer details"
-                    >
-                      <Edit2 className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (window.confirm(`Delete customer "${customer.customerName}"?`)) {
-                          onDeleteCustomer(customer.id);
-                        }
-                      }}
-                      className="p-1.5 rounded-lg bg-rose-500/10 text-rose-400 hover:text-rose-300 border border-rose-500/20"
-                      title="Delete customer"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                  {/* Right: Price calculation & Chevron */}
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <div className="text-right">
+                      <span className="text-sm font-extrabold text-white block">
+                        {currency}{amt.toLocaleString()}
+                      </span>
+                      <span className="text-[10px] text-slate-400 block">
+                        {qty} × {currency}{rate}
+                      </span>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-slate-500" />
                   </div>
                 </div>
+              );
+            })
+          )}
+        </div>
+      )}
 
-                {/* Row 2: The Excel Metrics Grid (Qty, Price, Amt) */}
-                <div className="grid grid-cols-3 gap-2 py-2 px-3 rounded-xl bg-slate-900 border border-slate-800 text-center">
-                  <div>
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block">
-                      Quantity (Qty)
-                    </span>
-                    <span className="text-sm font-extrabold text-white mt-0.5 block">
-                      {qty}
-                    </span>
-                  </div>
-
-                  <div className="border-x border-slate-800">
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block">
-                      Price / Rate
-                    </span>
-                    <span className="text-sm font-extrabold text-blue-400 mt-0.5 block">
-                      {currency}{price}
-                    </span>
-                  </div>
-
-                  <div>
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block">
-                      Total Amt
-                    </span>
-                    <span className="text-sm font-black text-white mt-0.5 block">
-                      {currency}{amt.toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Row 3: 1-Tap Excel Status Toggles (Delivered ✓ and Amount Collected ✓) */}
-                <div className="grid grid-cols-2 gap-2 pt-1">
-                  {/* 1-Tap Delivered Toggle */}
-                  <button
-                    type="button"
-                    onClick={() => onToggleDelivery(customer.id)}
-                    className={`py-2 px-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95 ${
-                      isDel
-                        ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/30'
-                        : 'bg-amber-500/15 border-amber-500/40 text-amber-300 hover:bg-amber-500/25'
-                    }`}
-                    title="Click to toggle delivery status"
-                  >
-                    {isDel ? (
-                      <>
-                        <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                        <span className="truncate">✓ Delivered</span>
-                      </>
-                    ) : (
-                      <>
-                        <Clock className="w-4 h-4 text-amber-400 flex-shrink-0" />
-                        <span className="truncate">⏳ To Deliver</span>
-                      </>
-                    )}
-                  </button>
-
-                  {/* 1-Tap Amount Collected Toggle */}
-                  <button
-                    type="button"
-                    onClick={() => onToggleCollected(customer.id)}
-                    className={`py-2 px-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95 ${
-                      isCol
-                        ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/30'
-                        : 'bg-rose-500/15 border-rose-500/40 text-rose-300 hover:bg-rose-500/25'
-                    }`}
-                    title="Click to toggle collected status"
-                  >
-                    {isCol ? (
-                      <>
-                        <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                        <span className="truncate">✓ Collected</span>
-                      </>
-                    ) : (
-                      <>
-                        <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0" />
-                        <span className="truncate">⏳ Not Collected</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-
-                {/* Row 4: Bill Action & Customer History Navigation */}
-                <div className="flex items-center justify-between pt-2 border-t border-slate-800/80 gap-2">
-                  {/* Separate Bill / Invoice button (User Requirement!) */}
-                  <button
-                    type="button"
-                    onClick={() => onOpenCreateBill(customer)}
-                    className="flex-1 py-2 px-3 rounded-xl bg-blue-600/15 hover:bg-blue-600/25 border border-blue-500/30 text-blue-400 font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-98"
-                  >
-                    <Receipt className="w-3.5 h-3.5" />
-                    <span>Create / Send Bill Photo</span>
-                  </button>
-
-                  {/* View Full History */}
-                  <button
-                    type="button"
-                    onClick={() => onSelectCustomer(customer)}
-                    className="py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 font-bold text-xs flex items-center gap-1 transition-all"
-                  >
-                    <span>Details</span>
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+      {/* ------------------------------------------------------------- */}
+      {/* TAB 2: PENDING ORDERS (ORDERS WAITING FOR DELIVERY)           */}
+      {/* ------------------------------------------------------------- */}
+      {activeTab === 'pending_orders' && (
+        <div className="space-y-3">
+          {filteredList.length === 0 ? (
+            <div className="biz-card p-8 text-center space-y-3">
+              <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto" />
+              <div>
+                <h3 className="font-bold text-white text-sm">All Orders Delivered! 🎉</h3>
+                <p className="text-xs text-slate-400 mt-1">
+                  There are no pending deliveries right now. All customers have received their supply.
+                </p>
               </div>
-            );
-          })}
+              <button
+                onClick={() => setActiveTab('customers')}
+                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs"
+              >
+                View Customers List
+              </button>
+            </div>
+          ) : (
+            filteredList.map(customer => {
+              const qty = Number(customer.quantity) || 36;
+              const rate = Number(customer.customRate || customer.price) || 0;
+              const amt = Number(customer.totalAmount) || (qty * rate);
+
+              return (
+                <div
+                  key={customer.id}
+                  className="biz-card p-4 space-y-3 border border-amber-500/30 bg-[#162032] shadow-sm"
+                >
+                  {/* Top Line: Name, Place & Amt */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                          ⏳ To Deliver
+                        </span>
+                        <h4 className="font-extrabold text-base text-white capitalize">
+                          {customer.customerName}
+                        </h4>
+                      </div>
+                      <div className="flex items-center gap-2 mt-1 text-xs text-slate-400">
+                        {customer.customerPlace && (
+                          <span className="flex items-center gap-1 text-slate-300">
+                            <MapPin className="w-3.5 h-3.5 text-blue-400" />
+                            <span className="capitalize">{customer.customerPlace}</span>
+                          </span>
+                        )}
+                        {customer.customerPhone && (
+                          <span>• 📞 {customer.customerPhone}</span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="text-right">
+                      <span className="text-base font-black text-white block">
+                        {currency}{amt.toLocaleString()}
+                      </span>
+                      <span className="text-[10px] text-slate-400 block">
+                        {qty} units × {currency}{rate}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Primary Action Button: [ Deliver Order & Move to Customers ] */}
+                  <div className="pt-2 border-t border-slate-800/80 grid grid-cols-2 gap-2">
+                    {/* Mark Delivered Button (Moves to Customers list & removes from here!) */}
+                    <button
+                      type="button"
+                      onClick={() => onDeliverOrder(customer.id)}
+                      className="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all"
+                    >
+                      <Check className="w-4 h-4 stroke-[2.5]" />
+                      <span>Deliver (ഡെലിവേർഡ്)</span>
+                    </button>
+
+                    {/* View Details / Bill */}
+                    <button
+                      type="button"
+                      onClick={() => onSelectCustomer(customer)}
+                      className="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-all"
+                    >
+                      <FileText className="w-3.5 h-3.5 text-blue-400" />
+                      <span>Details & Bill</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       )}
     </div>

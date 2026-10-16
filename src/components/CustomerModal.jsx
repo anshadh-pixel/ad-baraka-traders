@@ -25,7 +25,7 @@ export default function CustomerModal({
       : (initialCustomer?.price || product?.basePrice || 16)
   );
   const [isDelivered, setIsDelivered] = useState(
-    initialCustomer?.isDelivered !== undefined ? Boolean(initialCustomer.isDelivered) : true
+    initialCustomer?.isDelivered !== undefined ? Boolean(initialCustomer.isDelivered) : false
   );
   const [isCollected, setIsCollected] = useState(
     initialCustomer?.isCollected !== undefined ? Boolean(initialCustomer.isCollected) : false

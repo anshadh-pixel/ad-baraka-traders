@@ -284,6 +284,64 @@ export default function CustomerDetailView({
             </div>
           </div>
         </div>
+
+        {/* Status Toggles: Delivered (In Customers) vs To Deliver (In Pending Orders) */}
+        <div className="pt-3 border-t border-slate-800/80 space-y-1.5">
+          <span className="text-[10px] uppercase font-bold text-slate-400 block">
+            Status Toggles (തത്സമയ അവസ്ഥ)
+          </span>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                const nextDel = !customer.isDelivered;
+                onUpdateCustomer({ ...customer, isDelivered: nextDel });
+              }}
+              className={`py-2 px-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95 ${
+                customer.isDelivered
+                  ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300'
+                  : 'bg-amber-600/20 border-amber-500 text-amber-300'
+              }`}
+            >
+              {customer.isDelivered ? (
+                <>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Delivered (In Customers)</span>
+                </>
+              ) : (
+                <>
+                  <Clock className="w-3.5 h-3.5 text-amber-400" />
+                  <span>To Deliver (In Pending)</span>
+                </>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                const nextCol = !customer.isCollected;
+                onUpdateCustomer({ ...customer, isCollected: nextCol });
+              }}
+              className={`py-2 px-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95 ${
+                customer.isCollected
+                  ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300'
+                  : 'bg-rose-500/20 border-rose-500 text-rose-300'
+              }`}
+            >
+              {customer.isCollected ? (
+                <>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Amount Collected</span>
+                </>
+              ) : (
+                <>
+                  <AlertCircle className="w-3.5 h-3.5 text-rose-400" />
+                  <span>Payment Due</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* SECTION: ENTER NEW BILL / NEW ORDER (പുതിയ ബിൽ ചേർക്കുക) */}

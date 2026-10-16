@@ -78,6 +78,24 @@ export default function App() {
     showToast(`${target.customerName}: ${target.isDelivered ? '✅ Marked Delivered' : '⏳ Marked To Deliver'}`);
   };
 
+  // Deliver an order from Pending Orders tab and move to Customers list
+  const handleDeliverOrder = (customerId) => {
+    const updatedCustomers = customers.map(c => {
+      if (c.id === customerId) {
+        return {
+          ...c,
+          isDelivered: true
+        };
+      }
+      return c;
+    });
+
+    saveCustomersData(updatedCustomers);
+    setData(prev => ({ ...prev, customers: updatedCustomers }));
+    const target = updatedCustomers.find(c => c.id === customerId);
+    showToast(`✅ "${target?.customerName}" delivered! Moved to Customers list.`);
+  };
+
   // 1-Tap Toggle: Amount Collected Status
   const handleToggleCollected = (customerId) => {
     const updatedCustomers = customers.map(c => {
@@ -254,6 +272,7 @@ export default function App() {
             onDeleteCustomer={handleDeleteCustomer}
             onToggleDelivery={handleToggleDelivery}
             onToggleCollected={handleToggleCollected}
+            onDeliverOrder={handleDeliverOrder}
             onOpenCreateBill={(c) => setCreateBillModal({ isOpen: true, customer: c, product: selectedProduct })}
           />
         )}
